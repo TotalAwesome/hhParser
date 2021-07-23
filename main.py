@@ -48,12 +48,12 @@ def get_region_id():
     while not SELECTED:
         ID_LIST = print_areas_list(JSON) 
         print ('- '*50)
-        print ('Введи номер региона либо оставь поле пустым для поиска на текущем уровне:')
+        print ('Введите номер региона либо оставь поле пустым для поиска на текущем уровне:')
         ID = None
         while ID == None:
             ID = input()
             if ID not in ID_LIST and ID != '':
-                print ('Ты чо пёс, введи правильный id!')
+                print ('Введен неправильный ID')
                 ID = None
         if ID != '':
             for i in JSON:
@@ -94,11 +94,9 @@ def get_search_list():
             RESULT.append(WORD)
         else:
             REPEAT = False
-    if len(RESULT) == 0:
-        RESULT = ['']
     return RESULT
 
-def get_vacancies(REGION_ID,TEXT,PERIOD,EMP_ID):
+def get_vacancies(REGION_ID,TEXT,PERIOD):
     PAGE = 0
     ENDPAGE = False
     CONTACTS_LIST = []
@@ -107,9 +105,8 @@ def get_vacancies(REGION_ID,TEXT,PERIOD,EMP_ID):
             PAGE_TEXT = ''
         else:
             PAGE_TEXT = '&page='+str(PAGE)
-        URL_VACANCIES = URL_SEARCH + '?text='+TEXT+'&per_page=100&area='+str(REGION_ID)+'&employer_id='+EMP_ID+'&period='+ PERIOD+PAGE_TEXT
+        URL_VACANCIES = URL_SEARCH + '?text='+TEXT+'&per_page=100&area='+str(REGION_ID)+'&period='+ PERIOD+PAGE_TEXT
         RES = requests.get(URL_VACANCIES)
-        # print(RES)
         JSON = RES.json()
         if 'bad_argument' not in JSON:
             PAGE = JSON['page']
@@ -153,36 +150,6 @@ def save_csv(TEXT): # Лог в консоль
         CSV_FILE.write(DATA)
         CSV_FILE.close()
 
-def print_employers_list(TEXT, REGION):
-    URL_EMPLOYERS = 'https://api.hh.ru/employers?'
-    URL_EMPLOYERS += 'text='+TEXT
-    URL_EMPLOYERS += '&area='+REGION
-    PAGE = 0
-    ENDPAGE = False
-    EMP_LIST = []
-    while not ENDPAGE:
-        if PAGE == 0:
-            PAGE_TEXT = ''
-        else:
-            PAGE_TEXT = '&page='+str(PAGE)
-        URL_EMPLOYERS += '&per_page=100'+PAGE_TEXT
-        RES = requests.get(URL_EMPLOYERS)
-        JSON = RES.json()
-        if 'bad_argument' not in JSON:
-            PAGE = JSON['page']
-            PAGES = JSON['pages'] 
-            LIST = JSON['items']
-            for EMP in LIST:
-                LINE = 'ID : ' + EMP['id'] + '  Фирма: '+ EMP['name']
-                print (LINE)
-            if PAGE == PAGES-1:
-                ENDPAGE = True
-            else:
-                PAGE += 1
-        else:
-            ENDPAGE = True
-
-
 def main():
     global REGION_LIST
     global SEARCH_LIST
@@ -190,52 +157,20 @@ def main():
     TABLE = []
     LIST =SEARCH_LIST.copy()
     INPUT = ''
-
-    # print()
-    while True:
-        INPUT = input ('Обработать списки (1) или ввести данные вручну? (2) ')
-        if INPUT == '2':
-            REGION_LIST =[]
-            REGION_LIST.append(get_region_id())
-            LIST = get_search_list()
-            break
-        if INPUT == '1':
-            break
-
-    # REPEAT =True
-    # while (INPUT !='1' and INPUT!='2'):
-    #     INPUT = input()
-    #     if INPUT != '1' and INPUT != '2':
-    #          print('Введите 1 или 2')
-    # if INPUT == '2':
-    #     REGION_LIST =[]
-    #     REGION_LIST.append(get_region_id())
-    #     LIST = get_search_list()
-
-    while True:
-        INPUT = input('Получить список работодателей в выбранных регионах? (1 - Да, 2 - Нет): ')
-        if INPUT == '2':
-            break
-        if INPUT == '1':
-            INPUT = input('Введи текст для поиска, например "ИНКО" или оставь поле пустым: ')
-            for AREA in REGION_LIST:
-                print_employers_list(INPUT,AREA)
-            break
-    EMP_ID = ''
-    while True:
-        INPUT = input('Добавить к поиску фильтр по работодателю? (1 - Да, 2 - Нет): ')
-        if INPUT == '2':
-            break
-        if INPUT == '1':
-            INPUT = input('Введи ID работодателя: ')
-            EMP_ID = INPUT
-            break
-    
+    print('Обработать списки (1) или ввести данные вручну? (2) ')
+    REPEAT =True
+    while (INPUT !='1' and INPUT!='2'):
+        INPUT = input()
+        if INPUT != '1' and INPUT != '2':
+             print('Введите 1 или 2')
+    if INPUT == '2':
+        REGION_LIST =[]
+        REGION_LIST.append(get_region_id())
+        LIST = get_search_list()
 
     for REGION_ID in REGION_LIST:
         for i in LIST:
-            TABLE += get_vacancies(REGION_ID, i, PERIOD, EMP_ID)
-        print (TABLE)
+            TABLE += get_vacancies(REGION_ID, i, PERIOD)
         save_csv(TABLE)
             
 
